@@ -150,6 +150,7 @@ plt.show()
 
 
 # Check how good our model is using R2 method or coefficient of determination
+# prediction / actual
 
 sum_square_actual = 0
 sum_square_predicted = 0
