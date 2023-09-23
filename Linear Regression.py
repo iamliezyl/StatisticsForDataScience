@@ -4,204 +4,108 @@
 # In[1]:
 
 
-get_ipython().run_line_magic('matplotlib', 'inline')
+import sklearn
 import numpy as np
-import pandas as pd
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+
+# ![image.png](attachment:image.png)
 
 # In[2]:
 
 
-plt.rcParams['figure.figsize'] = (20.0, 10.0)
+# Seed is a repeatable one when generating sample data
+np.random.seed(50)
+
+# this will generate random numbers between 0 and 1
+X = 2 * np.random.rand(100, 1)
+
+y = 4 + 3 * X + np.random.randn(100,1)  #add noise in the data  (generate random numbers with normal distribution)
 
 
 # In[3]:
 
 
-# Reading Data
-data = pd.read_csv('headbrain.csv')
-print(data.shape)
+plt.plot(X,y,'bo')
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.axis([0,2,0,15])
+plt.show()
 
 
 # In[4]:
 
 
-print(data)
-
-
-# In[5]:
-
-
-data.head()
-
-
-# In[6]:
-
-
-# Collecting X and Y
-X = data['Head Size(cm^3)'].values
-Y = data['Brain Weight(grams)'].values
-
-
-# In[7]:
-
-
-mean_x = np.mean(X)
-mean_y = np.mean(Y)
-
-
-# In[8]:
-
-
-print(mean_x, mean_y)
-
-
-# In[9]:
-
-
-# Total no. of values
-items = len(X)
-items
-
-
-# ### Solve for b1 and b0
-# ### b1 is m where 
-# 
-# ![image.png](attachment:image.png)
-# 
-# ### b0 is c 
-# ### c = mean_y - (b1 * mean_x)
-
-# In[10]:
-
-
-# solve for b1 or m
-numerator = 0
-denominator = 0
-
-for i in range(items):
-    numerator += (X[i] - mean_x) * (Y[i] - mean_y)
-    denominator += (X[i] - mean_x) ** 2
-print(numerator, denominator)
+X.shape
 
 
 # In[11]:
 
 
-b1 = numerator / denominator
-#b1 = 0.28
-b0 = mean_y - (b1 * mean_x)
+# To get the intercept, we need to have more than 1 feature, so we will add 1 to each of the instance
+X_b = np.c_[np.ones((100,1)), X]
+X_b.shape
 
 
 # In[12]:
 
 
-# Print Coefficients
-print(b1, b0)
-
-# 0.26342933948939945 325.57342104944223 where b1 = numerator / denominator
-# 0.27 301.6956962025316 where b1 = 0.27
+X_b
 
 
-# In[13]:
+# In[29]:
 
 
-# print y predicted values
-# y = mx + c
+# solve for theta best
 
-for i in range(items):
-    y_prediction = b1 * X[i] + b0
-    print(y_prediction)
+#linalg - linear algebra; inv - inverse
+theta_best = np.linalg.inv(X_b.T.dot(X_b)).dot(X_b.T).dot(y)
 
 
-# In[14]:
+# In[30]:
 
 
-# Plotting values and regression line
-
-max_x = np.max(X) + 100
-min_x = np.min(X) - 100
-
-# Calculating the line values x and y
-x = np.linspace(min_x, max_x, 1000)   # linspace creates sequences of evenly spaced values within a defined interval
-y = b0 + b1 * x                       # y_predicted values
-print(y)
+# result gives us intercept and coefficient
+theta_best
 
 
-# In[15]:
+# In[36]:
 
 
-# Plotting the line
+# create random data points
 
-plt.plot(x, y, color = '#58b970', label = 'Regression line')
+X_new = np.array([[0],[3]])
+X_new_b = np.c_[np.ones((2,1)),X_new]
 
 
-# Plotting the scatter points
-plt.scatter(X, Y, c = '#ef5423', label = 'Scatter Plot', s = 40)
+# In[37]:
 
-plt.xlabel('Head Size in cm3')
-plt.ylabel('Brain Weight in grams')
+
+X_new_b
+
+
+# In[38]:
+
+
+#solve for y_predict
+
+y_predict = X_new_b.dot(theta_best)
+y_predict
+
+
+# In[47]:
+
+
+# plot the visualization
+
+plt.plot(X_new, y_predict, "r-", label = "regression line")
+plt.plot(X,y,'bo')
+plt.xlabel("X")
+plt.ylabel("y")
+plt.axis([0,2,0,15])
 plt.legend()
 plt.show()
 
 
-# In[21]:
-
-
-# Check how good our model is using R2 method or coefficient of determination
-# prediction / actual
-
-sum_square_actual = 0
-sum_square_predicted = 0
-for i in range(items):
-    #y_pred_ = y[i]
-    y_pred = b0 + b1 * X[i]
-    #print(y_pred)
-    sum_square_actual += (Y[i] - mean_y) ** 2
-    #sum_square_predicted =(y_pred - mean_y) ** 2
-    #sum_square_predicted += (Y[i] - y_pred) ** 2
-    sum_square_predicted += (y_pred - mean_y) ** 2
-
-r2 = (sum_square_predicted / sum_square_actual)
-print(r2)
-
-# 0.26342933948939945 325.57342104944223 where b1 = numerator / denominator
-# r2 = 0.6226985655579578
-
-## 0.27 301.6956962025316 where b1 = 0.27
-#r2 = 0.6541496414950141
-
-
-# # using scikit-learn
-
-# In[24]:
-
-
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
-
-X = X.reshape((items, 1))  
-# reshape allows us to reshape an array in Python
-# In this case, the desired shape is specified as (items, 1), whiere items no. of records in x 
-# which means that the resulting array will have 237 rows and column column
-
-regression = LinearRegression()
-
-# Fitting training data
-regression = regression.fit(X,Y)
-
-# Y Prediction
-y_pred = regression.predict(X)
-
-# Calculating R2 Score
-r2_score = regression.score(X,Y)
-
-print(r2)
-
-
 # In[ ]:
-
-
-
-
